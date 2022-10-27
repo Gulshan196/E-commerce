@@ -1,38 +1,44 @@
-import React, { useContext, useEffect, useReducer } from 'react'
-import { createContext } from 'react'
-import axios from 'axios'
-import { cartReducer } from './Reducers';
+import { createContext, useContext, useReducer } from "react";
+import faker from "faker";
+import { cartReducer, productReducer } from "./Reducers";
 
 const Cart = createContext();
+faker.seed(99);
+
 const Context = ({ children }) => {
-    const [state,dispatch] = useReducer(cartReducer,{
-        products: [],
-        cart: []
-    })
+  const products = [...Array(20)].map(() => ({
+    id: faker.datatype.uuid(),
+    name: faker.commerce.productName(),
+    price: faker.commerce.price(),
+    image: faker.random.image(),
+    inStock: faker.random.arrayElement([0, 3, 5, 6, 7]),
+    fastDelivery: faker.datatype.boolean(),
+    ratings: faker.random.arrayElement([1, 2, 3, 4, 5]),
+  }));
 
-    console.log(state)
+  const [state, dispatch] = useReducer(cartReducer, {
+    products: products,
+    cart: [],
+  });
 
-    const fetchProducts = async() => {
-        const {data}  = await axios.get("https:dummyjson.com/products");
-        console.log(data)
+  const [productState, productDispatch] = useReducer(productReducer, {
+    byStock: false,
+    byFastDelivery: false,
+    byRating: 0,
+    searchQuery: "",
+  });
 
-        dispatch({
-            type: "ADD_PRODUCTS",
-            payload: data.products,
-        });
+  console.log(productState);
 
-    };
+  return (
+    <Cart.Provider value={{ state, dispatch, productState, productDispatch }}>
+      {children}
+    </Cart.Provider>
+  );
+};
 
-    useEffect(()=>{
-     fetchProducts();
-    },[])
-
-   
-  return <Cart.Provider value={{state,dispatch}}>{ children }</Cart.Provider>
+export const CartState = () => {
+  return useContext(Cart);
 };
 
 export default Context;
-
-export const CartState = () => {
-    return useContext(Cart);
-}
